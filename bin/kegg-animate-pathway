@@ -9,7 +9,8 @@ import contextlib
 import csv
 import logging
 import random
-import StringIO
+from io import BytesIO
+#import BytesIO
 import xml.etree.ElementTree as xml
 
 parser = argparse.ArgumentParser()
@@ -263,7 +264,7 @@ with step("retrieving information about pathway %s" % options.pathway_id):
         logger.debug("retrieving KGML from " + kgml_d.url)
 
     with step("parsing KGML", True):
-        kgml_d = xml.parse(StringIO.StringIO(kgml_d.content)).getroot()
+        kgml_d = xml.parse(BytesIO(kgml_d.content)).getroot()
         organism_id = kgml_d.get("org").upper()
         pathway_id = kgml_d.get("number")
         pathway_title = kgml_d.get("title")
@@ -272,7 +273,7 @@ with step("retrieving information about pathway %s" % options.pathway_id):
         image_d = requests.get(kgml_d.get("image"))
         logger.debug("retrieving PNG from " + image_d.url)
 
-        pathway_image = PIL.Image.open(StringIO.StringIO(image_d.content))
+        pathway_image = PIL.Image.open(BytesIO(image_d.content))
         logger.debug("format: %s, dimensions: %s, mode: %s" % (
             pathway_image.format, pathway_image.size, pathway_image.mode))
 
@@ -403,7 +404,7 @@ for dataset_options in datasets:
 
     with step("loading levels from '%s'" % fn):
         ignored_entities = {}
-        min_level, max_level = sys.maxint, -sys.maxint
+        min_level, max_level = sys.maxsize, -sys.maxsize
 
         for entity_name, entity_levels in list_activity_levels(fn):
             entity_id, entity_type = parse_entity_name(entity_name)
@@ -477,7 +478,7 @@ for dataset_options in datasets:
         if (mid_value is not None):
             mid_value = normalize(mid_value)
 
-        for entity_key, entity_levels in levels_.iteritems():
+        for entity_key, entity_levels in levels_.items():
             levels[entity_key] = (
                 dataset_options,
                 map(normalize, entity_levels),
@@ -535,7 +536,7 @@ aggregate = {
 }[options.aggregation_function]
 
 ignored_graphic_elements = []
-for graphic_element, linked_entities in graphic_elements.iteritems():
+for graphic_element, linked_entities in graphic_elements.items():
     graphic_options, mid_value, colors = None, None, []
 
     # for each timepoint,
@@ -547,7 +548,7 @@ for graphic_element, linked_entities in graphic_elements.iteritems():
                 continue
 
             graphic_options_, activity_levels_, mid_value_ = levels[entity_key]
-
+            activity_levels_ = list(activity_levels_)
             if (graphic_options is not None) and \
                (graphic_options != graphic_options_):
                 error(
